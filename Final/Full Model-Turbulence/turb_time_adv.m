@@ -1,0 +1,29 @@
+function [hturb,all_vel,all_vis]=turb_time_adv(hturb,I,alpha,s,dt,dx,m)
+y=hturb;
+n=size(hturb,2);
+ytemp=y;
+for jj=2:n
+    h=y(jj);
+    [vel,vis2,zv2,z0,us,hh]=calculate_vel_vis_turb(I,h,alpha,s);
+    h1=y(jj-1);
+    [vel1,vis21,zv21,z01,us1,hh1]=calculate_vel_vis_turb(I,h1,alpha,s);
+    z=0:h/m:h;
+    velocity=interp1(hh,vel,z,'linear','extrap');
+    velocity(1)=0;
+    velocity1=interp1(hh1,vel1,z,'linear','extrap');
+    velocity1(1)=0;
+    viscosity=interp1(zv2,vis2,z,'linear','extrap');
+    viscosity1=interp1(zv21,vis21,z,'linear','extrap');
+    V=mean(velocity);
+    V1=mean(velocity1);
+    ytemp(jj)=y(jj)+dt*(I-(V*y(jj)-V1*y(jj-1))/dx);
+    all_vel(:,jj)=velocity';
+    all_vis(:,jj)=viscosity';
+    if(jj==2)
+        all_vel(:,jj-1)=velocity1';
+        all_vis(:,jj-1)=viscosity1';
+    end
+end
+y=ytemp;
+hturb=y;
+end
